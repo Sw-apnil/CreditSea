@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataTable, type Column } from '@/components/dashboard/DataTable';
-import { Alert, Button, EmptyState, Modal, PageHeader, Spinner, StatusBadge } from '@/components/ui';
+import { Alert, Button, EmptyState, Icon, Modal, PageHeader, QueueSkeleton, StatusBadge, Toast } from '@/components/ui';
 import { api, API_URL, ApiRequestError } from '@/lib/api';
 import { LOAN_STATUS } from '@/lib/constants';
 import { formatCurrency, formatDate } from '@/lib/loanMath';
@@ -22,6 +22,8 @@ export default function SanctionPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,31 +78,36 @@ export default function SanctionPage() {
     { key: 'status', header: 'Status', render: (loan) => <StatusBadge status={loan.status} /> },
   ];
 
+  const visibleLoans = useMemo(() => loans.filter((loan) => {
+    const borrower = borrowerOf(loan);
+    const application = applicationOf(loan);
+    const haystack = `${application?.fullName ?? ''} ${borrower?.name ?? ''} ${borrower?.email ?? ''} ${application?.pan ?? ''}`.toLowerCase();
+    return (!search.trim() || haystack.includes(search.trim().toLowerCase())) && (statusFilter === 'ALL' || loan.status === statusFilter);
+  }), [loans, search, statusFilter]);
+
   return (
     <div>
       <PageHeader title="Sanction — approvals" subtitle="Review applied loans and approve or reject them." />
 
-      {notice && (
-        <div className="mb-4">
-          <Alert tone="success">{notice}</Alert>
-        </div>
-      )}
+      {notice && <Toast message={notice} onClose={() => setNotice('')} />}
       {error && (
         <div className="mb-4">
           <Alert>{error}</Alert>
         </div>
       )}
 
+      {!loading && loans.length > 0 && <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_30px_rgba(15,23,42,0.035)] sm:flex-row"><div className="relative min-w-0 flex-1"><Icon name="search" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input aria-label="Search sanction queue" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by borrower, email or PAN" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100/70" /></div><select aria-label="Filter sanction queue" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100/70"><option value="ALL">All statuses</option><option value={LOAN_STATUS.APPLIED}>Applied</option><option value={LOAN_STATUS.SANCTIONED}>Sanctioned</option><option value={LOAN_STATUS.REJECTED}>Rejected</option></select></div>}
+
       {loading ? (
-        <Spinner />
+        <QueueSkeleton />
       ) : loans.length === 0 ? (
         <EmptyState title="Nothing to review" hint="New applications will appear here." />
       ) : (
         <>
-          <p className="mb-3 text-sm text-slate-500">{meta?.total ?? loans.length} loans</p>
+          <p className="mb-3 text-sm text-slate-500">Showing {visibleLoans.length} of {meta?.total ?? loans.length} loans</p>
           <DataTable
             columns={columns}
-            rows={loans}
+            rows={visibleLoans}
             rowKey={(loan) => loan.id}
             actions={(loan) => (
               <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setSelected(loan)}>

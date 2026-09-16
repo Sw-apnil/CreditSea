@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { DataTable, type Column } from '@/components/dashboard/DataTable';
-import { Alert, Button, EmptyState, Field, Icon, Modal, PageHeader, Spinner, StatusBadge } from '@/components/ui';
+import { Alert, Button, EmptyState, Field, Icon, Modal, PageHeader, QueueSkeleton, StatusBadge, Toast } from '@/components/ui';
 import { api, ApiRequestError } from '@/lib/api';
 import { LOAN_STATUS } from '@/lib/constants';
 import { formatCurrency, formatDate } from '@/lib/loanMath';
@@ -121,11 +121,7 @@ export default function CollectionPage() {
     <div>
       <PageHeader title="Collection — repayments" subtitle="Record borrower payments against disbursed loans." />
 
-      {notice && (
-        <div className="mb-4">
-          <Alert tone="success">{notice}</Alert>
-        </div>
-      )}
+      {notice && <Toast message={notice} onClose={() => setNotice('')} />}
       {error && (
         <div className="mb-4">
           <Alert>{error}</Alert>
@@ -147,7 +143,7 @@ export default function CollectionPage() {
       )}
 
       {loading ? (
-        <Spinner />
+        <QueueSkeleton />
       ) : loans.length === 0 ? (
         <EmptyState title="No active loans" hint="Disbursed loans will appear here." />
       ) : (

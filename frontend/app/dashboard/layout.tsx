@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex flex-1 flex-col px-4 py-7">
           <p className="px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Workspace</p>
           <nav className="mt-4 space-y-1">
-            <Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/7 hover:text-white"><Icon name="grid" size={18} /> Overview</Link>
+            <Link href="/dashboard" className={['relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition', pathname === '/dashboard' ? 'bg-[#285fc6] text-white shadow-lg shadow-blue-950/20' : 'text-slate-300 hover:bg-white/7 hover:text-white'].join(' ')}>{pathname === '/dashboard' && <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-blue-300" />}<Icon name="grid" size={18} /> Overview</Link>
             {allowed.map((module) => {
               const href = `/dashboard/${module.key}`;
               const active = pathname.startsWith(href);
