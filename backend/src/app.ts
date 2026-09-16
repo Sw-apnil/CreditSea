@@ -1,7 +1,8 @@
-import express, { type RequestHandler } from 'express';
+import express, { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { env } from './config/env';
+import { connectDatabase } from './config/db';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { apiRouter } from './routes';
 
@@ -30,3 +31,17 @@ export const createApp = (beforeRoutes?: RequestHandler) => {
 
   return app;
 };
+
+const ensureDatabase = async (_req: Request, _res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await connectDatabase();
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Vercel detects src/app.ts automatically. Export the actual Express handler
+// as the default export so the function runtime can invoke it directly.
+const app = createApp(ensureDatabase);
+export default app;
