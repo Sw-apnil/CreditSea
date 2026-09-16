@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { DataTable, type Column } from '@/components/dashboard/DataTable';
-import { Alert, Button, EmptyState, Field, Modal, PageHeader, Spinner, StatusBadge } from '@/components/ui';
+import { Alert, Button, EmptyState, Field, Icon, Modal, PageHeader, Spinner, StatusBadge } from '@/components/ui';
 import { api, ApiRequestError } from '@/lib/api';
 import { LOAN_STATUS } from '@/lib/constants';
 import { formatCurrency, formatDate } from '@/lib/loanMath';
@@ -19,6 +19,8 @@ export default function CollectionPage() {
   const [error, setError] = useState('');
   const [modalError, setModalError] = useState('');
   const [notice, setNotice] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,6 +107,16 @@ export default function CollectionPage() {
     { key: 'status', header: 'Status', render: (loan) => <StatusBadge status={loan.status} /> },
   ];
 
+  const visibleLoans = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return loans.filter((loan) => {
+      const application = typeof loan.applicationId === 'object' ? (loan.applicationId as Application) : null;
+      const user = typeof loan.userId === 'object' ? (loan.userId as User) : null;
+      const haystack = `${application?.fullName ?? ''} ${user?.name ?? ''} ${user?.email ?? ''}`.toLowerCase();
+      return (!query || haystack.includes(query)) && (statusFilter === 'ALL' || loan.status === statusFilter);
+    });
+  }, [loans, search, statusFilter]);
+
   return (
     <div>
       <PageHeader title="Collection — repayments" subtitle="Record borrower payments against disbursed loans." />
@@ -120,16 +132,30 @@ export default function CollectionPage() {
         </div>
       )}
 
+      {!loading && loans.length > 0 && (
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_30px_rgba(15,23,42,0.035)] sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Icon name="search" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input aria-label="Search loans" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by borrower name or email" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100/70" />
+          </div>
+          <select aria-label="Filter by loan status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100/70">
+            <option value="ALL">All statuses</option>
+            <option value={LOAN_STATUS.DISBURSED}>Disbursed</option>
+            <option value={LOAN_STATUS.CLOSED}>Closed</option>
+          </select>
+        </div>
+      )}
+
       {loading ? (
         <Spinner />
       ) : loans.length === 0 ? (
         <EmptyState title="No active loans" hint="Disbursed loans will appear here." />
       ) : (
         <>
-          <p className="mb-3 text-sm text-slate-500">{meta?.total ?? loans.length} loans</p>
+          <p className="mb-3 text-sm text-slate-500">Showing {visibleLoans.length} of {meta?.total ?? loans.length} loans</p>
           <DataTable
             columns={columns}
-            rows={loans}
+            rows={visibleLoans}
             rowKey={(loan) => loan.id}
             actions={(loan) => (
               <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => void open(loan)}>
