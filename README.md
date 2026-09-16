@@ -251,8 +251,6 @@ The middleware decodes the JWT **without verifying the signature**, which is int
 | `MONGODB_DB_NAME` | Database name (default `loan_management`) |
 | `JWT_SECRET` | Signing secret, at least 16 characters |
 | `JWT_EXPIRES_IN` | Token lifetime (default `1d`) |
-| `FRONTEND_URL` | Allowed CORS origin |
-| `UPLOAD_DIR` | Where salary slips are stored |
 
 **frontend/.env.local**
 

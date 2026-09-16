@@ -11,8 +11,6 @@ const envSchema = z.object({
   MONGODB_DB_NAME: z.string().default('loan_management'),
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters'),
   JWT_EXPIRES_IN: z.string().default('1d'),
-  FRONTEND_URL: z.url().default('http://localhost:3000'),
-  UPLOAD_DIR: z.string().default('uploads'),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -27,5 +25,5 @@ export const env = {
   ...parsed.data,
   isProduction: parsed.data.NODE_ENV === 'production',
   /** Absolute path so uploads resolve the same whatever the cwd is. */
-  uploadDirAbsolute: path.resolve(process.cwd(), parsed.data.UPLOAD_DIR),
+  uploadDirAbsolute: path.join(process.cwd(), 'uploads'),
 };
