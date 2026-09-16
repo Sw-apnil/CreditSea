@@ -14,11 +14,11 @@ export const createApp = (beforeRoutes?: RequestHandler) => {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
-  if (beforeRoutes) app.use(beforeRoutes);
-
   app.get('/health', (_req, res) => {
     res.json({ success: true, data: { status: 'ok', uptime: process.uptime() } });
   });
+
+  if (beforeRoutes) app.use(beforeRoutes);
 
   app.use('/api', apiRouter);
 

@@ -14,7 +14,9 @@ const ensureDatabase = async (_req: Request, _res: Response, next: NextFunction)
 
 // Vercel uses this default export as the Express serverless function.
 const app = createApp(ensureDatabase);
-export default app;
+// package.json uses CommonJS; export= compiles to module.exports, which is the
+// most reliable form for Vercel's Express detector.
+export = app;
 
 // Keep the traditional listener for local development. Vercel invokes the
 // exported app directly and must not start a second listener.
