@@ -1,11 +1,11 @@
-import express from 'express';
+import express, { type RequestHandler } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { apiRouter } from './routes';
 
-export const createApp = () => {
+export const createApp = (beforeRoutes?: RequestHandler) => {
   const app = express();
 
   // credentials:true is required for the httpOnly auth cookie to survive cross-origin calls.
@@ -13,6 +13,8 @@ export const createApp = () => {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
+
+  if (beforeRoutes) app.use(beforeRoutes);
 
   app.get('/health', (_req, res) => {
     res.json({ success: true, data: { status: 'ok', uptime: process.uptime() } });
