@@ -28,7 +28,7 @@ export const middleware = (request: NextRequest) => {
   const role = decodeRole(request.cookies.get('token')?.value ?? '');
 
   const redirect = (path: string) => NextResponse.redirect(new URL(path, request.url));
-  const homeFor = (r: Role) => (r === 'borrower' ? '/apply' : `/dashboard/${ROLE_MODULES[r][0] ?? ''}`);
+  const homeFor = (r: Role) => (r === 'borrower' ? '/apply' : '/dashboard');
 
   if (!role) {
     if (AUTH_PAGES.includes(pathname)) return NextResponse.next();
@@ -46,8 +46,8 @@ export const middleware = (request: NextRequest) => {
     if (role === 'borrower') return redirect('/apply');
     const module = pathname.split('/')[2];
     const allowed = ROLE_MODULES[role];
-    // Landing on /dashboard, or on a module this role cannot open, goes to their own module.
-    if (!module || !allowed.includes(module)) return redirect(homeFor(role));
+    // The dashboard root is the role-aware overview. Module routes still require permission.
+    if (module && !allowed.includes(module)) return redirect(homeFor(role));
   }
 
   return NextResponse.next();
