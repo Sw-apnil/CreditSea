@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #d9e5ff;
+  --color-brand-200: #bcd1ff;
+  --color-brand-500: #3b6fe0;
+  --color-brand-600: #2f59c4;
+  --color-brand-700: #27499e;
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: #f6f7fb;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Range inputs are the primary control on the loan configuration step. */
+input[type="range"] {
+  accent-color: var(--color-brand-600);
+}
