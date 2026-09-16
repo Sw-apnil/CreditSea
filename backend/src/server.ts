@@ -20,7 +20,7 @@ export = app;
 
 // Keep the traditional listener for local development. Vercel invokes the
 // exported app directly and must not start a second listener.
-if (env.NODE_ENV !== 'production') {
+if (env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   const start = async (): Promise<void> => {
     try {
       await connectDatabase();
