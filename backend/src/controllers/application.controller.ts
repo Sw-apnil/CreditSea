@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { Application } from '../models/application.model';
 import { Loan } from '../models/loan.model';
 import { runBre } from '../services/bre.service';
@@ -8,6 +8,7 @@ import { ACTIVE_LOAN_STATUSES, APPLICATION_STEP, BRE_STATUS } from '../utils/con
 import { asyncHandler } from '../utils/asyncHandler';
 import { sendSuccess } from '../utils/sendResponse';
 import type { PersonalDetailsInput } from '../validators/application.validators';
+import type { AppRequest } from '../types/request';
 
 /** Fetches the caller's application, creating it lazily for accounts made before this step existed. */
 const getOwnApplication = async (userId: string) => {
@@ -16,7 +17,7 @@ const getOwnApplication = async (userId: string) => {
   return Application.create({ userId, step: APPLICATION_STEP.REGISTERED });
 };
 
-export const getMyApplication = asyncHandler(async (req: Request, res: Response) => {
+export const getMyApplication = asyncHandler(async (req: AppRequest, res: Response) => {
   const application = await getOwnApplication(req.user!.id);
   const activeLoan = await Loan.findOne({ userId: req.user!.id, status: { $in: ACTIVE_LOAN_STATUSES } });
 
@@ -27,7 +28,7 @@ export const getMyApplication = asyncHandler(async (req: Request, res: Response)
   });
 });
 
-export const submitPersonalDetails = asyncHandler(async (req: Request, res: Response) => {
+export const submitPersonalDetails = asyncHandler(async (req: AppRequest, res: Response) => {
   const input = req.body as PersonalDetailsInput;
   const application = await getOwnApplication(req.user!.id);
 
@@ -74,7 +75,7 @@ export const submitPersonalDetails = asyncHandler(async (req: Request, res: Resp
   sendSuccess(res, { application: application.toJSON(), bre: { passed: true, age: bre.age } });
 });
 
-export const uploadSalarySlipHandler = asyncHandler(async (req: Request, res: Response) => {
+export const uploadSalarySlipHandler = asyncHandler(async (req: AppRequest, res: Response) => {
   if (!req.file) throw ApiError.badRequest('Attach a salary slip file under the field name "salarySlip"');
 
   const application = await getOwnApplication(req.user!.id);

@@ -1,16 +1,17 @@
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { User } from '../models/user.model';
 import { ROLES } from '../utils/constants';
 import { asyncHandler } from '../utils/asyncHandler';
 import { getQuery } from '../middleware/validate';
 import { sendSuccess } from '../utils/sendResponse';
 import type { Pagination } from '../validators/common.validators';
+import type { AppRequest } from '../types/request';
 
 /**
  * Sales owns the pre-application stage: borrowers who registered but never applied.
  * One aggregation joins the application and any loans, then keeps only the leads with no loan.
  */
-export const getLeads = asyncHandler(async (req: Request, res: Response) => {
+export const getLeads = asyncHandler(async (req: AppRequest, res: Response) => {
   const { page, limit, search } = getQuery<Pagination>(req);
 
   const match: Record<string, unknown> = { role: ROLES.BORROWER };

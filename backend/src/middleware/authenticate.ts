@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { ApiError } from '../utils/ApiError';
 import { AUTH_COOKIE_NAME, ROLE_VALUES, type Role } from '../utils/constants';
+import type { AppRequest } from '../types/request';
 
 export interface JwtPayload {
   sub: string;
@@ -36,7 +37,7 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction): 
       next(ApiError.unauthorized('Malformed session token'));
       return;
     }
-    req.user = { id: payload.sub, role: payload.role };
+    (req as AppRequest).user = { id: payload.sub, role: payload.role };
     next();
   } catch {
     next(ApiError.unauthorized('Your session has expired, please log in again'));

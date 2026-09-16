@@ -1,6 +1,7 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { ZodError, type ZodType } from 'zod';
 import { ApiError } from '../utils/ApiError';
+import type { AppRequest } from '../types/request';
 
 interface Schemas {
   body?: ZodType;
@@ -15,10 +16,11 @@ interface Schemas {
 export const validate =
   (schemas: Schemas): RequestHandler =>
   (req: Request, _res: Response, next: NextFunction): void => {
+    const appReq = req as AppRequest;
     try {
       if (schemas.body) req.body = schemas.body.parse(req.body);
       if (schemas.params) Object.assign(req.params, schemas.params.parse(req.params));
-      if (schemas.query) req.validatedQuery = schemas.query.parse(req.query) as Record<string, unknown>;
+      if (schemas.query) appReq.validatedQuery = schemas.query.parse(req.query) as Record<string, unknown>;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -35,4 +37,4 @@ export const validate =
   };
 
 /** Typed accessor for the parsed query string. */
-export const getQuery = <T>(req: Request): T => (req.validatedQuery ?? {}) as T;
+export const getQuery = <T>(req: Request): T => ((req as AppRequest).validatedQuery ?? {}) as T;

@@ -1,4 +1,4 @@
-import type { CookieOptions, Request, Response } from 'express';
+import type { CookieOptions, Response } from 'express';
 import { env } from '../config/env';
 import { Application } from '../models/application.model';
 import { User, hashPassword } from '../models/user.model';
@@ -8,6 +8,7 @@ import { APPLICATION_STEP, AUTH_COOKIE_NAME, ROLES } from '../utils/constants';
 import { asyncHandler } from '../utils/asyncHandler';
 import { sendSuccess } from '../utils/sendResponse';
 import type { LoginInput, SignupInput } from '../validators/auth.validators';
+import type { AppRequest } from '../types/request';
 
 /**
  * httpOnly keeps the token out of reach of JavaScript (so an XSS bug cannot steal it),
@@ -21,7 +22,7 @@ const cookieOptions = (): CookieOptions => ({
   path: '/',
 });
 
-export const signup = asyncHandler(async (req: Request, res: Response) => {
+export const signup = asyncHandler(async (req: AppRequest, res: Response) => {
   const { name, email, password } = req.body as SignupInput;
 
   if (await User.exists({ email })) {
@@ -43,7 +44,7 @@ export const signup = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(res, { user: user.toJSON() }, 201);
 });
 
-export const login = asyncHandler(async (req: Request, res: Response) => {
+export const login = asyncHandler(async (req: AppRequest, res: Response) => {
   const { email, password } = req.body as LoginInput;
 
   const user = await User.findOne({ email }).select('+passwordHash');
@@ -56,12 +57,12 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(res, { user: user.toJSON() });
 });
 
-export const logout = asyncHandler(async (_req: Request, res: Response) => {
+export const logout = asyncHandler(async (_req: AppRequest, res: Response) => {
   res.clearCookie(AUTH_COOKIE_NAME, { ...cookieOptions(), maxAge: undefined });
   sendSuccess(res, { message: 'Logged out' });
 });
 
-export const me = asyncHandler(async (req: Request, res: Response) => {
+export const me = asyncHandler(async (req: AppRequest, res: Response) => {
   const user = await User.findById(req.user!.id);
   if (!user) throw ApiError.unauthorized('Your account no longer exists');
   sendSuccess(res, { user: user.toJSON() });

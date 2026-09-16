@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { Application } from '../models/application.model';
 import { Loan } from '../models/loan.model';
 import { calculateDueDate, calculateLoan } from '../services/loan-math.service';
@@ -7,6 +7,7 @@ import { ACTIVE_LOAN_STATUSES, APPLICATION_STEP, BRE_STATUS, LOAN_RULES, ROLES }
 import { asyncHandler } from '../utils/asyncHandler';
 import { sendSuccess } from '../utils/sendResponse';
 import type { CreateLoanInput } from '../validators/loan.validators';
+import type { AppRequest } from '../types/request';
 
 const withDerived = (loan: InstanceType<typeof Loan>) => {
   const json = loan.toJSON() as unknown as Record<string, unknown>;
@@ -15,12 +16,12 @@ const withDerived = (loan: InstanceType<typeof Loan>) => {
 };
 
 /** A quote the borrower can preview without committing — same maths the apply route uses. */
-export const quote = asyncHandler(async (req: Request, res: Response) => {
+export const quote = asyncHandler(async (req: AppRequest, res: Response) => {
   const { principal, tenureDays } = req.body as CreateLoanInput;
   sendSuccess(res, { quote: calculateLoan(principal, tenureDays), rules: LOAN_RULES });
 });
 
-export const applyForLoan = asyncHandler(async (req: Request, res: Response) => {
+export const applyForLoan = asyncHandler(async (req: AppRequest, res: Response) => {
   const { principal, tenureDays } = req.body as CreateLoanInput;
   const userId = req.user!.id;
 
@@ -62,12 +63,12 @@ export const applyForLoan = asyncHandler(async (req: Request, res: Response) => 
   }
 });
 
-export const getMyLoans = asyncHandler(async (req: Request, res: Response) => {
+export const getMyLoans = asyncHandler(async (req: AppRequest, res: Response) => {
   const loans = await Loan.find({ userId: req.user!.id }).sort({ createdAt: -1 });
   sendSuccess(res, { loans: loans.map(withDerived) });
 });
 
-export const getLoanById = asyncHandler(async (req: Request, res: Response) => {
+export const getLoanById = asyncHandler(async (req: AppRequest, res: Response) => {
   const loan = await Loan.findById(req.params.id)
     .populate('userId', 'name email')
     .populate('applicationId');

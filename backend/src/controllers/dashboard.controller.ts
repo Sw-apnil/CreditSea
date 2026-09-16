@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { Application } from '../models/application.model';
 import { Loan } from '../models/loan.model';
 import { Payment } from '../models/payment.model';
@@ -14,9 +14,10 @@ import { getQuery } from '../middleware/validate';
 import { sendSuccess } from '../utils/sendResponse';
 import type { LoanListQuery } from '../validators/loan.validators';
 import type { CreatePaymentInput } from '../validators/payment.validators';
+import type { AppRequest } from '../types/request';
 
 /** Shared list builder for the sanction, disbursement and collection queues. */
-const listLoans = async (req: Request, allowed: LoanStatus[]) => {
+const listLoans = async (req: AppRequest, allowed: LoanStatus[]) => {
   const { page, limit, status, search } = getQuery<LoanListQuery>(req);
   const filter: Record<string, unknown> = {
     status: status && allowed.includes(status as LoanStatus) ? status : { $in: allowed },
@@ -53,7 +54,7 @@ const listLoans = async (req: Request, allowed: LoanStatus[]) => {
  * Performs a lifecycle move. The transition table decides what is legal, and the status is
  * re-checked inside the update filter so two executives cannot both act on the same loan.
  */
-const transitionLoan = async (req: Request, to: LoanStatus, extra: Record<string, unknown>) => {
+const transitionLoan = async (req: AppRequest, to: LoanStatus, extra: Record<string, unknown>) => {
   const loan = await Loan.findById(req.params.id);
   if (!loan) throw ApiError.notFound('Loan not found');
 
@@ -76,11 +77,11 @@ const transitionLoan = async (req: Request, to: LoanStatus, extra: Record<string
 
 // ---------- Sanction ----------
 
-export const getSanctionQueue = asyncHandler(async (req: Request, res: Response) => {
+export const getSanctionQueue = asyncHandler(async (req: AppRequest, res: Response) => {
   sendSuccess(res, await listLoans(req, [LOAN_STATUS.APPLIED, LOAN_STATUS.SANCTIONED, LOAN_STATUS.REJECTED]));
 });
 
-export const decideSanction = asyncHandler(async (req: Request, res: Response) => {
+export const decideSanction = asyncHandler(async (req: AppRequest, res: Response) => {
   const body = req.body as { action: 'approve' | 'reject'; reason?: string };
   const now = new Date();
 
@@ -97,7 +98,7 @@ export const decideSanction = asyncHandler(async (req: Request, res: Response) =
 });
 
 /** Salary slips are streamed through this authenticated route; the uploads folder is not public. */
-export const streamSalarySlip = asyncHandler(async (req: Request, res: Response) => {
+export const streamSalarySlip = asyncHandler(async (req: AppRequest, res: Response) => {
   const loan = await Loan.findById(req.params.id).populate('applicationId');
   if (!loan) throw ApiError.notFound('Loan not found');
 
@@ -112,11 +113,11 @@ export const streamSalarySlip = asyncHandler(async (req: Request, res: Response)
 
 // ---------- Disbursement ----------
 
-export const getDisbursementQueue = asyncHandler(async (req: Request, res: Response) => {
+export const getDisbursementQueue = asyncHandler(async (req: AppRequest, res: Response) => {
   sendSuccess(res, await listLoans(req, [LOAN_STATUS.SANCTIONED, LOAN_STATUS.DISBURSED]));
 });
 
-export const disburseLoan = asyncHandler(async (req: Request, res: Response) => {
+export const disburseLoan = asyncHandler(async (req: AppRequest, res: Response) => {
   const loan = await transitionLoan(req, LOAN_STATUS.DISBURSED, {
     disbursedBy: req.user!.id,
     disbursedAt: new Date(),
@@ -126,11 +127,11 @@ export const disburseLoan = asyncHandler(async (req: Request, res: Response) => 
 
 // ---------- Collection ----------
 
-export const getCollectionQueue = asyncHandler(async (req: Request, res: Response) => {
+export const getCollectionQueue = asyncHandler(async (req: AppRequest, res: Response) => {
   sendSuccess(res, await listLoans(req, [LOAN_STATUS.DISBURSED, LOAN_STATUS.CLOSED]));
 });
 
-export const getLoanPayments = asyncHandler(async (req: Request, res: Response) => {
+export const getLoanPayments = asyncHandler(async (req: AppRequest, res: Response) => {
   const loan = await Loan.findById(req.params.id);
   if (!loan) throw ApiError.notFound('Loan not found');
 
@@ -149,7 +150,7 @@ export const getLoanPayments = asyncHandler(async (req: Request, res: Response) 
   });
 });
 
-export const addPayment = asyncHandler(async (req: Request, res: Response) => {
+export const addPayment = asyncHandler(async (req: AppRequest, res: Response) => {
   const input = req.body as CreatePaymentInput;
   const { loan, payment } = await recordPayment({
     loanId: String(req.params.id),
