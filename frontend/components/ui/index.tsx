@@ -179,6 +179,11 @@ export const Alert = ({
   );
 };
 
+export const Toast = ({ message, onClose, tone = 'success' }: { message: string; onClose: () => void; tone?: 'success' | 'error' | 'info' }) => {
+  const tones = { success: 'border-emerald-200 bg-emerald-50 text-emerald-800', error: 'border-red-200 bg-red-50 text-red-800', info: 'border-blue-200 bg-blue-50 text-blue-800' };
+  return <div className={`fixed bottom-5 right-5 z-40 flex max-w-sm items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-medium shadow-[0_16px_40px_rgba(15,23,42,0.14)] ${tones[tone]}`} role="status"><span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-current" /><span className="flex-1">{message}</span><button onClick={onClose} aria-label="Dismiss notification" className="-mr-1 rounded-lg px-1 text-current/60 hover:bg-black/5 hover:text-current">×</button></div>;
+};
+
 export const StatusBadge = ({ status }: { status: LoanStatus | string }) => {
   const tones: Record<string, string> = {
     [LOAN_STATUS.APPLIED]: 'bg-amber-100 text-amber-800',
@@ -210,6 +215,12 @@ export const Spinner = ({ label = 'Loading…' }: { label?: string }) => (
   <div className="flex items-center justify-center gap-3 py-12 text-sm text-slate-500">
     <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600" />
     {label}
+  </div>
+);
+
+export const QueueSkeleton = ({ rows = 5 }: { rows?: number }) => (
+  <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.045)] ring-1 ring-slate-200/70">
+    <div className="space-y-4">{Array.from({ length: rows }).map((_, index) => <div key={index} className="flex items-center gap-4 border-b border-slate-100 pb-4 last:border-0 last:pb-0"><span className="h-9 w-9 animate-pulse rounded-xl bg-slate-200" /><span className="flex-1 space-y-2"><span className="block h-3 w-1/3 animate-pulse rounded bg-slate-200" /><span className="block h-2.5 w-1/2 animate-pulse rounded bg-slate-100" /></span><span className="hidden h-3 w-20 animate-pulse rounded bg-slate-100 sm:block" /><span className="h-8 w-24 animate-pulse rounded-xl bg-slate-100" /></div>)}</div>
   </div>
 );
 

@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, ApiRequestError } from './api';
-import { ROLE_MODULES } from './constants';
 import type { User } from './types';
 
 interface AuthContextValue {
@@ -18,7 +17,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const homePathFor = (user: User): string =>
-  user.role === 'borrower' ? '/apply' : `/dashboard/${ROLE_MODULES[user.role][0] ?? ''}`;
+  user.role === 'borrower' ? '/apply' : '/dashboard';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
